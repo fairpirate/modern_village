@@ -1,4 +1,5 @@
 import { useTexture } from '@react-three/drei';
+import { RigidBody } from '@react-three/rapier';
 import { RepeatWrapping, DoubleSide } from 'three';
 
 export default function Ground() {
@@ -13,15 +14,17 @@ export default function Ground() {
     });
 
     return (
-        <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[200, 200]} />
-            <meshStandardMaterial
-                map={color}
-                // normalMap={normal}
-                // roughnessMap={roughness}
-                roughness={1}
-            />
-        </mesh>
+        <RigidBody type='fixed' position={[0, -1, 0]}>
+            <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[200, 200]} />
+                <meshStandardMaterial
+                    map={color}
+                    // normalMap={normal}
+                    // roughnessMap={roughness}
+                    roughness={1}
+                />
+            </mesh>
+        </RigidBody>
     );
 }
 

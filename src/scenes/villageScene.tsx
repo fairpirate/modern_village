@@ -4,16 +4,17 @@
 // import Ground from './components/Ground';
 // import River from './components/River';
 
+import { Physics, RigidBody } from "@react-three/rapier";
 import { BoatControlledGLB } from "../component/boat";
 import Ground from "../component/ground";
-import { River } from "../component/river";
+import {  WaterBondWithWall } from "../component/waterBond";
 
 export default function VillageScene() {
   return (
-    <>
-      <Ground  />
-      <River />
+    <Physics gravity={[0, -9.81, 0]}>
       <BoatControlledGLB />
+      <WaterBondWithWall />
+      {/* <Ground /> */}
       {/* Temples */}
       {/* <Temple position={[-8, 0, -5]} />
       <Temple position={[-4, 0, 2]} />
@@ -31,6 +32,6 @@ export default function VillageScene() {
       <Tree position={[4, 0, -5]} />
       <Tree position={[-6, 0, 4]} /> */}
       {/* Add many more trees with random spread */}
-    </>
+    </Physics>
   );
 }

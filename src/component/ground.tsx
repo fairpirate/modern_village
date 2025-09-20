@@ -10,12 +10,12 @@ export default function Ground() {
     ]);
     [color/* , normal, roughness */].forEach(tex => {
         tex.wrapS = tex.wrapT = RepeatWrapping;
-        tex.repeat.set(200, 200);
+        tex.repeat.set(500, 500);
     });
 
     return (
         <RigidBody type='fixed' position={[0, -1, 0]}>
-            <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} on>
                 <planeGeometry args={[200, 200]} />
                 <meshStandardMaterial
                     map={color}

@@ -8,13 +8,17 @@ import { Physics, RigidBody } from "@react-three/rapier";
 import { BoatControlledGLB } from "../component/boat";
 import Ground from "../component/ground";
 import {  WaterBondWithWall } from "../component/waterBond";
+import FarmingGround from "../component/farmingLand";
+import { PalmTree } from "../assetsRender/Palmtree";
 
 export default function VillageScene() {
   return (
     <Physics gravity={[0, -9.81, 0]}>
       <BoatControlledGLB />
-      <WaterBondWithWall />
-      {/* <Ground /> */}
+      {/* <WaterBondWithWall /> */}
+      <Ground />
+      <FarmingGround />
+      <PalmTree />
       {/* Temples */}
       {/* <Temple position={[-8, 0, -5]} />
       <Temple position={[-4, 0, 2]} />

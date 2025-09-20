@@ -1,59 +1,83 @@
 import * as THREE from 'three';
-import { useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
+import { Water } from 'three/examples/jsm/objects/Water.js';
 
 export function WaterBondWithWall() {
-  const waterBondRef = useRef<any>(null);
-  const [color2] = useTexture(['/assets/ground.jpg']);
+  const waterGroup = useRef<THREE.Group>(null);
+  const water = useRef<any>(null);
 
-  const [color, normal] = useTexture([
+  // Ground wall texture
+  const groundTex = useTexture('/assets/ground.jpg');
+  groundTex.wrapS = groundTex.wrapT = THREE.RepeatWrapping;
+  groundTex.repeat.set(10, 10);
+
+  // Water textures
+  const [waterColor, waterNormal] = useTexture([
     '/assets/water-color.jpg',
     '/assets/water-normalgl.jpg',
   ]);
-
-  // Animate UVs for water flow
-  useFrame((_, delta) => {
-    if (waterBondRef.current) {
-      waterBondRef.current.material.map.offset.y -= delta * 0.05;
-    }
-  });
-
-  [color, normal].forEach(tex => {
+  [waterColor, waterNormal].forEach(tex => {
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(100, 100);
   });
 
-  color2.wrapS = color2.wrapT = THREE.RepeatWrapping;
-  color2.repeat.set(10, 10); // Tune this to your liking
+  // Animate water shader
+  useFrame((_, delta) => {
+    if (water.current) {
+      water.current.material.uniforms['time'].value += delta * 0.2; // control wave speed
+    }
+  });
+
+  useEffect(() => {
+    const geometry = new THREE.CircleGeometry(50, 128); // More segments = smoother waves
+
+    const waterObj = new Water(geometry, {
+      textureWidth: 512,
+      textureHeight: 512,
+      waterNormals: waterNormal,
+      alpha: 1.0,
+      sunDirection: new THREE.Vector3(),
+      sunColor: 0xffffff,
+      waterColor: 0x001e0f,
+      distortionScale: 3,
+    });
+
+    waterObj.rotation.x = -Math.PI / 2;
+    water.current = waterObj;
+
+    if (waterGroup.current) {
+      waterGroup.current.add(waterObj);
+    }
+
+    return () => {
+      if (waterGroup.current) {
+        waterGroup.current.remove(waterObj);
+      }
+      waterObj.geometry.dispose();
+      waterObj.material.dispose();
+    };
+  }, [waterNormal]);
 
   return (
     <>
-      {/* Water Plane */}
-      <RigidBody  position={[0, -2, 0]} colliders="hull" type="fixed">
-        <mesh
-          ref={waterBondRef}
-          receiveShadow
-          position={[0, 0, 0]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
-          <circleGeometry args={[50, 50]} />
-          <meshStandardMaterial
-            transparent
-            map={color}
-            normalMap={normal}
-            opacity={0.7}
-            color="skyblue"
-            roughness={0.2}
-            metalness={0.3}
-          />
-        </mesh>
+      {/* Water */}
+      <RigidBody type="fixed">
+       <group ref={waterGroup} position={[0, -2, 0]} />
       </RigidBody>
+
+      {/* Circular Wall */}
       <RigidBody type="fixed" colliders="trimesh">
-        <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
-          <torusGeometry args={[50, 1.5, 100, 20]} />
-          <meshStandardMaterial roughness={1} map={color2} />
+        <mesh
+          position={[0, -10, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          castShadow
+          receiveShadow
+        >
+          <torusGeometry args={[50, 10, 200, 20]} />
+          <meshStandardMaterial roughness={1} map={groundTex} clippingPlanes={[new THREE.Plane(new THREE.Vector3(1, 0, 0), 0)]} clipShadows />
         </mesh>
       </RigidBody>
     </>

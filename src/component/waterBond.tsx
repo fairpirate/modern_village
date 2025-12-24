@@ -5,14 +5,9 @@ import { useTexture } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 
-export function WaterBondWithWall() {
+export function OceanView() {
   const waterGroup = useRef<THREE.Group>(null);
   const water = useRef<any>(null);
-
-  // Ground wall texture
-  const groundTex = useTexture('/assets/ground.jpg');
-  groundTex.wrapS = groundTex.wrapT = THREE.RepeatWrapping;
-  groundTex.repeat.set(10, 10);
 
   // Water textures
   const [waterColor, waterNormal] = useTexture([
@@ -21,7 +16,7 @@ export function WaterBondWithWall() {
   ]);
   [waterColor, waterNormal].forEach(tex => {
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(100, 100);
+    tex.repeat.set(1000, 1000);
   });
 
   // Animate water shader
@@ -65,20 +60,7 @@ export function WaterBondWithWall() {
     <>
       {/* Water */}
       <RigidBody type="fixed">
-       <group ref={waterGroup} position={[0, -2, 0]} />
-      </RigidBody>
-
-      {/* Circular Wall */}
-      <RigidBody type="fixed" colliders="trimesh">
-        <mesh
-          position={[0, -10, 0]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          castShadow
-          receiveShadow
-        >
-          <torusGeometry args={[50, 10, 200, 20]} />
-          <meshStandardMaterial roughness={1} map={groundTex} clippingPlanes={[new THREE.Plane(new THREE.Vector3(1, 0, 0), 0)]} clipShadows />
-        </mesh>
+         <group ref={waterGroup} position={[0, -0.5, 0]} />
       </RigidBody>
     </>
   );

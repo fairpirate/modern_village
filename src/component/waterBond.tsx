@@ -59,9 +59,9 @@ export function OceanView() {
   return (
     <>
       {/* Water */}
-      <RigidBody type="fixed">
-         <group ref={waterGroup} position={[0, -0.5, 0]} />
-      </RigidBody>
+      {/* <RigidBody type="fixed"> */}
+         <group ref={waterGroup} position={[0, 0, 0]} />
+      {/* </RigidBody> */}
     </>
   );
 }

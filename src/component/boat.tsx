@@ -13,15 +13,30 @@ export function BoatControlledGLB({ }: {}) {
   const { actions } = useAnimations(manAnimations, manScene)
   const angleRef = useRef(0);
   const speed = 2;
-  const turnSpeed = Math.PI / 60;
+  const turnSpeed = Math.PI / 500;
   const [movement, setMovement] = useState({ ArrowUp: false, ArrowLeft: false, ArrowRight: false });
   const headOffset = new THREE.Vector3(0, 4.9, -1); // height of eyes
   const { camera } = useThree();
   const boatQuatRef = useRef(new THREE.Quaternion());
+  const headBoneRef = useRef<any>(null);
+  const quat = useRef(new THREE.Quaternion());
+  const headPos = useRef(new THREE.Vector3());
+  const headQuat = useRef(new THREE.Quaternion());
+
 
   // Handle keyboard input
   useEffect(() => {
-    console.log("manAnimations:", manAnimations,actions);
+    console.log(manAnimations, actions);
+    manRef.current?.traverse(obj => {
+    if (
+      obj.type === 'Bone' &&
+      obj.name.toLowerCase().includes('head')
+    ) {
+      headBoneRef.current = obj;
+      console.log('Head bone found:', obj.name);
+    }
+    
+  });
     actions.sitting?.play()
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key in movement) setMovement(m => ({ ...m, [e.key]: true }));
@@ -41,7 +56,10 @@ export function BoatControlledGLB({ }: {}) {
     if (!boatRef.current || !boatPhyRef.current || !manRef.current) return;
 
     const { ArrowUp, ArrowLeft, ArrowRight } = movement;
-    const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angleRef.current, 0));
+
+    quat.current.setFromEuler(
+      new THREE.Euler(0, angleRef.current, 0)
+    );
 
     // TURN
     if (ArrowLeft) angleRef.current += turnSpeed;
@@ -53,52 +71,57 @@ export function BoatControlledGLB({ }: {}) {
 
     // MOVE
     if (ArrowUp) {
-      const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(quat).normalize();
-      
+      const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(quat.current).normalize();
+
       boatPhyRef.current.setLinvel({ x: forward.x * speed, y: 0, z: forward.z * speed, }, true);
     }
 
     const pos = boatPhyRef.current.translation();
-    
+
     boatRef.current.rotation.z = Math.sin(clock.elapsedTime + pos.x) * 0.05;
     boatRef.current.rotation.x = Math.cos(clock.elapsedTime + pos.z) * 0.05;
 
-    boatPhyRef.current.setRotation(quat, true);
+    boatPhyRef.current.setRotation(quat.current, true);
     // --- CAMERA POV (FIXED) ---
 
-    const headPos = new THREE.Vector3();
-    const headQuat = new THREE.Quaternion();
+   
 
     // get man world transform
-    manRef.current.getWorldPosition(headPos);
-    manRef.current.getWorldQuaternion(headQuat);
+    headBoneRef.current?.updateWorldMatrix(true, false);
+    headBoneRef.current?.getWorldPosition(headPos.current);
+    headBoneRef.current?.getWorldQuaternion(headQuat.current);
+
+    // manRef.current.getWorldPosition(headPos);
+    // manRef.current.getWorldQuaternion(headQuat);
 
     // apply local offset correctly
-    const camOffset = headOffset.clone().applyQuaternion(headQuat);
-    headPos.add(camOffset);
+    // const camOffset = headOffset.clone().applyQuaternion(headQuat.current);
+    // headPos.current.add(camOffset);
 
     // smooth camera position
-    // camera.position.lerp(headPos, 0.2);
+    camera.position.lerp(headPos.current, 0.2);
 
-    // forward direction (-Z is forward in Three.js)
-    const forward = new THREE.Vector3(0, -1, -1).applyQuaternion(headQuat).normalize();
+    const forward = new THREE.Vector3(0,0,-1).applyQuaternion(headQuat.current).normalize();
+    const backward = forward.clone().multiplyScalar(-1);
 
     // look forward
-    // camera.lookAt(
-    //   headPos.x + forward.x,
-    //   headPos.y + forward.y,
-    //   headPos.z + forward.z
-    // );
+    camera.lookAt(
+      headPos.current.x + backward.x,
+      headPos.current.y + backward.y,
+      headPos.current.z + backward.z
+    );
   });
 
   return (
     <RigidBody
       ref={boatPhyRef}
       type="dynamic"
+      colliders="hull"
       linearDamping={1.5}
       angularDamping={2.0}
+      gravityScale={0}
     >
-      <group ref={boatRef}>
+      <group ref={boatRef} position={[0, -0.5, 0]}>
         {/* Boat */}
         <primitive object={scene} scale={1} />
 
@@ -107,8 +130,8 @@ export function BoatControlledGLB({ }: {}) {
           ref={manRef}
           object={manScene}
           scale={2}
-          position={[0, 0.5, -0.5]}  // adjust to sit in boat
-          rotation={[0, Math.PI/8, 0]} // face forward
+          position={[0, 0, 0]}  // adjust to sit in boat
+          // rotation={[0, Math.PI / 8, 0]} // face forward
         />
       </group>
     </RigidBody>
